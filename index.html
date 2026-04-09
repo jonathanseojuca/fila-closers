@@ -21,6 +21,8 @@
       --accent: #111110;
       --accent-fg: #ffffff;
       --green: #1D9E75;
+      --green-bg: #e1f5ee;
+      --green-dark: #085041;
       --red: #E24B4A;
       --radius: 14px;
       --radius-sm: 8px;
@@ -36,10 +38,9 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 1.5rem 1rem;
+      padding: 1.5rem 1rem 3rem;
     }
 
-    /* ── Header ── */
     .header {
       display: flex;
       align-items: center;
@@ -49,12 +50,7 @@
       animation: fadeUp 0.5s 0.1s forwards;
     }
 
-    .logo-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--accent);
-    }
+    .logo-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
 
     .header-label {
       font-size: 12px;
@@ -64,7 +60,6 @@
       color: var(--text-muted);
     }
 
-    /* ── Main card ── */
     .card {
       background: var(--surface);
       border: 0.5px solid var(--border);
@@ -79,12 +74,7 @@
       animation: fadeUp 0.5s 0.2s forwards;
     }
 
-    .card-label {
-      font-size: 12px;
-      color: var(--text-hint);
-      letter-spacing: 0.05em;
-      margin-bottom: 0.5rem;
-    }
+    .card-label { font-size: 12px; color: var(--text-hint); letter-spacing: 0.05em; margin-bottom: 0.5rem; }
 
     .closer-name {
       font-family: 'Syne', sans-serif;
@@ -101,10 +91,7 @@
       transition: opacity 0.15s, transform 0.15s;
     }
 
-    .closer-name.transitioning {
-      opacity: 0;
-      transform: translateY(6px);
-    }
+    .closer-name.transitioning { opacity: 0; transform: translateY(6px); }
 
     .closer-name.muted {
       font-size: 1rem;
@@ -114,189 +101,162 @@
       font-style: italic;
     }
 
-    /* ── Queue pills ── */
-    .queue-section {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 0;
-    }
-
-    .queue-section-label {
-      font-size: 11px;
-      color: var(--text-hint);
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-
-    .pills {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      justify-content: flex-end;
-      flex: 1;
-    }
+    .queue-section { width: 100%; display: flex; align-items: center; gap: 10px; }
+    .queue-section-label { font-size: 11px; color: var(--text-hint); white-space: nowrap; flex-shrink: 0; }
+    .pills { display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-end; flex: 1; }
 
     .pill {
-      font-size: 11px;
-      font-weight: 500;
-      padding: 3px 10px;
-      border-radius: var(--radius-pill);
-      background: transparent;
-      color: var(--text-muted);
+      font-size: 11px; font-weight: 500;
+      padding: 3px 10px; border-radius: var(--radius-pill);
+      background: transparent; color: var(--text-muted);
       border: 0.5px solid var(--border);
       transition: background 0.2s, color 0.2s, border-color 0.2s;
     }
 
-    .pill.active {
-      background: var(--accent);
-      color: var(--accent-fg);
-      border-color: var(--accent);
-    }
+    .pill.active { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
 
-    /* ── Divider ── */
-    .divider {
-      width: 100%;
-      height: 0.5px;
-      background: var(--border);
-      margin: 1.5rem 0;
-    }
+    .divider { width: 100%; height: 0.5px; background: var(--border); margin: 1.5rem 0; }
 
-    /* ── Buttons ── */
-    .btn-row {
-      display: flex;
-      gap: 10px;
-      width: 100%;
-    }
+    .btn-row { display: flex; gap: 10px; width: 100%; }
 
     .btn {
-      flex: 1;
-      padding: 13px 10px;
-      border-radius: var(--radius-sm);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      border: 0.5px solid var(--border-strong);
-      background: var(--surface);
-      color: var(--text);
+      flex: 1; padding: 13px 10px; border-radius: var(--radius-sm);
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+      cursor: pointer; border: 0.5px solid var(--border-strong);
+      background: var(--surface); color: var(--text);
       transition: background 0.12s, transform 0.1s, opacity 0.12s;
       white-space: nowrap;
     }
 
     .btn:hover { background: #f5f4f0; }
     .btn:active { transform: scale(0.97); }
-
-    .btn-primary {
-      background: var(--accent);
-      color: var(--accent-fg);
-      border-color: var(--accent);
-    }
-
+    .btn-primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
     .btn-primary:hover { opacity: 0.82; background: var(--accent); }
 
-    /* ── Status ── */
-    .status {
-      font-size: 12px;
-      color: var(--text-hint);
-      margin-top: 12px;
-      text-align: center;
-      min-height: 16px;
-      transition: opacity 0.3s;
-    }
-
+    .status { font-size: 12px; color: var(--text-hint); margin-top: 12px; text-align: center; min-height: 16px; }
     .status.success { color: var(--green); }
     .status.error   { color: var(--red); }
 
     /* ── Stats ── */
     .stats-section {
-      width: 100%;
-      max-width: 440px;
-      margin-top: 12px;
-      opacity: 0;
-      animation: fadeUp 0.5s 0.35s forwards;
+      width: 100%; max-width: 440px; margin-top: 12px;
+      opacity: 0; animation: fadeUp 0.5s 0.35s forwards;
     }
 
     .stats-toggle {
-      width: 100%;
-      background: none;
-      border: none;
-      padding: 10px 0;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 12px;
-      color: var(--text-hint);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: color 0.15s;
+      width: 100%; background: none; border: none; padding: 10px 0;
+      font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--text-hint);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      gap: 6px; transition: color 0.15s;
     }
-
     .stats-toggle:hover { color: var(--text-muted); }
 
-    .stats-grid {
-      display: none;
-      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-      gap: 8px;
-      margin-top: 8px;
-    }
+    .stats-panel { display: none; flex-direction: column; gap: 10px; }
+    .stats-panel.open { display: flex; }
 
-    .stats-grid.open { display: grid; }
-
-    .stat-card {
+    /* filter card */
+    .filter-card {
       background: var(--surface);
       border: 0.5px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 10px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .stat-name {
-      font-size: 11px;
-      color: var(--text-muted);
-      white-space: nowrap;
+      border-radius: var(--radius);
       overflow: hidden;
-      text-overflow: ellipsis;
     }
 
-    .stat-count {
-      font-family: 'Syne', sans-serif;
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: var(--text);
+    .filter-top {
+      padding: 14px 16px 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      border-bottom: 0.5px solid var(--border);
     }
 
-    /* ── Reload ── */
-    .reload-btn {
-      margin-top: 1.5rem;
-      font-size: 11px;
-      color: var(--text-hint);
-      background: none;
-      border: none;
-      cursor: pointer;
+    .filter-label { font-size: 11px; color: var(--text-hint); white-space: nowrap; }
+
+    .ftabs { display: flex; gap: 5px; }
+
+    .ftab {
+      font-size: 12px; font-weight: 500;
+      padding: 4px 13px; border-radius: var(--radius-pill);
+      border: 0.5px solid var(--border); background: transparent;
+      color: var(--text-muted); cursor: pointer;
       font-family: 'DM Sans', sans-serif;
-      letter-spacing: 0.03em;
-      transition: color 0.15s;
-      opacity: 0;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+    }
+    .ftab:hover { background: var(--bg); }
+    .ftab.active { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+
+    .filter-bottom {
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 44px;
+    }
+
+    .filter-bottom select {
+      font-family: 'DM Sans', sans-serif; font-size: 13px;
+      padding: 5px 10px; border-radius: var(--radius-sm);
+      border: 0.5px solid var(--border-strong);
+      background: var(--bg); color: var(--text);
+      cursor: pointer; outline: none; flex: 1;
+    }
+
+    .filter-hint { font-size: 12px; color: var(--text-hint); font-style: italic; }
+
+    /* summary banner */
+    .summary-banner {
+      background: var(--green-bg);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .summary-left {}
+
+    .summary-period { font-size: 11px; color: var(--green); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 2px; }
+    .summary-desc   { font-size: 13px; color: var(--green-dark); }
+
+    .summary-right { display: flex; align-items: baseline; gap: 4px; flex-shrink: 0; }
+    .summary-number { font-family: 'Syne', sans-serif; font-size: 2.2rem; font-weight: 800; color: var(--green-dark); line-height: 1; }
+    .summary-unit   { font-size: 11px; color: var(--green); }
+
+    /* grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+
+    .stat-card {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 12px;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+
+    .stat-name { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stat-count { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--text); }
+    .stat-count.zero { color: var(--text-hint); }
+
+    .no-data { grid-column: 1 / -1; text-align: center; font-size: 13px; color: var(--text-hint); font-style: italic; padding: 1rem 0; }
+
+    .reload-btn {
+      margin-top: 1.5rem; font-size: 11px; color: var(--text-hint);
+      background: none; border: none; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; letter-spacing: 0.03em;
+      transition: color 0.15s; opacity: 0;
       animation: fadeUp 0.5s 0.45s forwards;
     }
-
     .reload-btn:hover { color: var(--text-muted); }
 
-    /* ── Animations ── */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(10px); }
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* ── Responsive ── */
     @media (max-width: 400px) {
       .card { padding: 2rem 1.25rem 1.5rem; }
       .btn-row { flex-direction: column; }
+      .ftabs { flex-wrap: wrap; }
     }
   </style>
 </head>
@@ -331,20 +291,73 @@
       <span id="stats-arrow">▾</span>
       <span>Ver reuniões agendadas</span>
     </button>
-    <div class="stats-grid" id="stats-grid"></div>
+
+    <div class="stats-panel" id="stats-panel">
+
+      <!-- filter card -->
+      <div class="filter-card">
+        <div class="filter-top">
+          <span class="filter-label">Filtrar por</span>
+          <div class="ftabs">
+            <button class="ftab active" data-mode="day"   onclick="setMode('day')">Dia</button>
+            <button class="ftab"        data-mode="month" onclick="setMode('month')">Mês</button>
+            <button class="ftab"        data-mode="year"  onclick="setMode('year')">Ano</button>
+            <button class="ftab"        data-mode="all"   onclick="setMode('all')">Tudo</button>
+          </div>
+        </div>
+        <div class="filter-bottom" id="filter-bottom">
+          <!-- select injected by JS -->
+        </div>
+      </div>
+
+      <!-- summary banner -->
+      <div class="summary-banner">
+        <div class="summary-left">
+          <div class="summary-period" id="summary-period">Hoje</div>
+          <div class="summary-desc"  id="summary-desc">reuniões agendadas</div>
+        </div>
+        <div class="summary-right">
+          <span class="summary-number" id="summary-number">0</span>
+          <span class="summary-unit">reuniões</span>
+        </div>
+      </div>
+
+      <!-- per-closer grid -->
+      <div class="stats-grid" id="stats-grid"></div>
+
+    </div>
   </div>
 
   <button class="reload-btn" onclick="fetchSheet()">↻ Recarregar planilha</button>
 
   <script>
-    // ── CONFIGURAÇÃO ──────────────────────────────────────────────
+    // ── CONFIG ─────────────────────────────────────────
     const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQXQEJMybM1mJ2X-Mf_EzgrCBoLt_t7leS7yI1cw_C2_g_iAc19TjHypB69AlKmR9v5Ay5Nn8g6G55o/pub?output=csv';
-    // ─────────────────────────────────────────────────────────────
+    const STATE_KEY = 'cq_state_v4';
+    // ───────────────────────────────────────────────────
 
-    const STATE_KEY = 'cq_state_v3';
-    let closers = [];
-    let index = 0;
-    let meetings = {};
+    let closers  = [];
+    let index    = 0;
+    let meetings = []; // [{ closer: string, ts: 'YYYY-MM-DD' }]
+
+    let filterMode  = 'day';
+    let filterDay, filterMonth, filterYear;
+
+    const MONTH_NAMES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const MONTH_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+    function todayStr() {
+      const d = new Date();
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    }
+    function pad(n) { return String(n).padStart(2,'0'); }
+
+    function initFilter() {
+      const d = new Date();
+      filterDay   = todayStr();
+      filterMonth = `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+      filterYear  = String(d.getFullYear());
+    }
 
     function persist() {
       try { localStorage.setItem(STATE_KEY, JSON.stringify({ index, meetings })); } catch(e) {}
@@ -353,18 +366,40 @@
     function restore() {
       try {
         const s = localStorage.getItem(STATE_KEY);
-        if (s) { const d = JSON.parse(s); index = d.index || 0; meetings = d.meetings || {}; }
+        if (!s) return;
+        const d = JSON.parse(s);
+        index    = d.index || 0;
+        meetings = Array.isArray(d.meetings) ? d.meetings : [];
       } catch(e) {}
     }
 
+    function filteredMeetings() {
+      return meetings.filter(m => {
+        if (filterMode === 'all')   return true;
+        if (filterMode === 'day')   return m.ts === filterDay;
+        if (filterMode === 'month') return m.ts.startsWith(filterMonth);
+        if (filterMode === 'year')  return m.ts.startsWith(filterYear);
+        return true;
+      });
+    }
+
+    function countsByCloser(list) {
+      const map = {};
+      closers.forEach(c => map[c] = 0);
+      list.forEach(m => { if (map[m.closer] !== undefined) map[m.closer]++; });
+      return map;
+    }
+
+    /* ── Main render ── */
     function render() {
-      const nameEl = document.getElementById('closer-name');
+      const nameEl  = document.getElementById('closer-name');
       const pillsEl = document.getElementById('pills');
 
       if (!closers.length) {
         nameEl.textContent = 'Nenhum closer encontrado';
         nameEl.classList.add('muted');
         pillsEl.innerHTML = '';
+        renderStats();
         return;
       }
 
@@ -379,24 +414,124 @@
       renderStats();
     }
 
+    /* ── Stats render ── */
     function renderStats() {
+      buildFilterSelect();
+
+      const filtered = filteredMeetings();
+      const counts   = countsByCloser(filtered);
+      const total    = filtered.length;
+
+      // period label
+      const periodEl = document.getElementById('summary-period');
+      const descEl   = document.getElementById('summary-desc');
+
+      if (filterMode === 'day') {
+        const [y,m,d] = filterDay.split('-');
+        periodEl.textContent = filterDay === todayStr() ? 'Hoje' : `${d}/${m}/${y}`;
+        descEl.textContent   = 'reuniões agendadas no dia';
+      } else if (filterMode === 'month') {
+        const [y,m] = filterMonth.split('-');
+        periodEl.textContent = `${MONTH_NAMES[parseInt(m)-1]} ${y}`;
+        descEl.textContent   = 'reuniões agendadas no mês';
+      } else if (filterMode === 'year') {
+        periodEl.textContent = filterYear;
+        descEl.textContent   = 'reuniões agendadas no ano';
+      } else {
+        periodEl.textContent = 'Todos os períodos';
+        descEl.textContent   = 'reuniões agendadas no total';
+      }
+
+      document.getElementById('summary-number').textContent = total;
+
+      // grid
       const grid = document.getElementById('stats-grid');
       if (!closers.length) { grid.innerHTML = ''; return; }
+
+      const hasAny = Object.values(counts).some(v => v > 0);
+      if (!hasAny) {
+        grid.innerHTML = `<div class="no-data">Nenhuma reunião neste período.</div>`;
+        return;
+      }
+
       grid.innerHTML = closers.map(c => `
         <div class="stat-card">
           <div class="stat-name">${c.split(' ')[0]}</div>
-          <div class="stat-count">${meetings[c] || 0}</div>
+          <div class="stat-count${counts[c] === 0 ? ' zero' : ''}">${counts[c]}</div>
         </div>
       `).join('');
     }
 
-    function animateName(newName) {
+    function buildFilterSelect() {
+      const container = document.getElementById('filter-bottom');
+
+      if (filterMode === 'all') {
+        container.innerHTML = `<span class="filter-hint">Exibindo todos os registros</span>`;
+        return;
+      }
+
+      // build unique sorted lists
+      const allTs = meetings.map(m => m.ts);
+      const days   = [...new Set(allTs)].sort().reverse();
+      const months = [...new Set(allTs.map(t => t.slice(0,7)))].sort().reverse();
+      const years  = [...new Set(allTs.map(t => t.slice(0,4)))].sort().reverse();
+
+      // always include current period
+      if (!days.includes(todayStr())) days.unshift(todayStr());
+      if (!months.includes(filterMonth)) months.unshift(filterMonth);
+      if (!years.includes(filterYear))   years.unshift(filterYear);
+
+      let html = '';
+
+      if (filterMode === 'day') {
+        html = `<select onchange="filterDay=this.value;renderStats()">`;
+        days.forEach(d => {
+          const [y,m,dd] = d.split('-');
+          const label = d === todayStr() ? `Hoje — ${dd}/${m}/${y}` : `${dd}/${m}/${y}`;
+          html += `<option value="${d}" ${d===filterDay?'selected':''}>${label}</option>`;
+        });
+        html += `</select>`;
+      } else if (filterMode === 'month') {
+        html = `<select onchange="filterMonth=this.value;renderStats()">`;
+        months.forEach(mo => {
+          const [y,m] = mo.split('-');
+          html += `<option value="${mo}" ${mo===filterMonth?'selected':''}>${MONTH_NAMES[parseInt(m)-1]} ${y}</option>`;
+        });
+        html += `</select>`;
+      } else if (filterMode === 'year') {
+        html = `<select onchange="filterYear=this.value;renderStats()">`;
+        years.forEach(y => {
+          html += `<option value="${y}" ${y===filterYear?'selected':''}>${y}</option>`;
+        });
+        html += `</select>`;
+      }
+
+      container.innerHTML = html;
+    }
+
+    function setMode(mode) {
+      filterMode = mode;
+      document.querySelectorAll('.ftab').forEach(b =>
+        b.classList.toggle('active', b.dataset.mode === mode)
+      );
+      renderStats();
+    }
+
+    /* ── Actions ── */
+    function animateName(name) {
       const el = document.getElementById('closer-name');
       el.classList.add('transitioning');
       setTimeout(() => {
-        el.textContent = newName;
-        el.classList.remove('muted', 'transitioning');
+        el.textContent = name;
+        el.classList.remove('muted','transitioning');
       }, 150);
+    }
+
+    function renderPills() {
+      const idx = index % closers.length;
+      document.getElementById('pills').innerHTML = closers.map((c, i) =>
+        `<span class="pill${i === idx ? ' active' : ''}">${c.split(' ')[0]}</span>`
+      ).join('');
     }
 
     function skipCloser() {
@@ -408,50 +543,46 @@
       showStatus('Próximo closer selecionado.', '');
     }
 
-    function renderPills() {
-      const pillsEl = document.getElementById('pills');
-      const idx = index % closers.length;
-      pillsEl.innerHTML = closers.map((c, i) =>
-        `<span class="pill${i === idx ? ' active' : ''}">${c.split(' ')[0]}</span>`
-      ).join('');
-    }
-
     function scheduledMeeting() {
       if (!closers.length) return;
       const name = closers[index % closers.length];
-      meetings[name] = (meetings[name] || 0) + 1;
+      meetings.push({ closer: name, ts: todayStr() });
       index = (index + 1) % closers.length;
       persist();
       animateName(closers[index % closers.length]);
       renderPills();
       renderStats();
-      showStatus(`Reunião agendada para ${name}! 🎯`, 'success');
+      showStatus(`Reunião agendada para ${name}!`, 'success');
+    }
+
+    function toggleStats() {
+      const panel = document.getElementById('stats-panel');
+      const arrow = document.getElementById('stats-arrow');
+      const open  = panel.classList.toggle('open');
+      arrow.textContent = open ? '▴' : '▾';
+      if (open) renderStats();
     }
 
     function showStatus(msg, type) {
       const el = document.getElementById('status');
       el.textContent = msg;
-      el.className = 'status ' + type;
-      if (type !== 'error') setTimeout(() => { if (el.textContent === msg) { el.textContent = ''; el.className = 'status'; } }, 3000);
-    }
-
-    function toggleStats() {
-      const grid = document.getElementById('stats-grid');
-      const arrow = document.getElementById('stats-arrow');
-      const open = grid.classList.toggle('open');
-      arrow.textContent = open ? '▴' : '▾';
+      el.className   = 'status ' + type;
+      if (type !== 'error') setTimeout(() => {
+        if (el.textContent === msg) { el.textContent = ''; el.className = 'status'; }
+      }, 3000);
     }
 
     async function fetchSheet() {
-      document.getElementById('closer-name').textContent = 'Carregando...';
-      document.getElementById('closer-name').classList.add('muted');
+      const nameEl = document.getElementById('closer-name');
+      nameEl.textContent = 'Carregando...';
+      nameEl.classList.add('muted');
       showStatus('Buscando planilha...', '');
       try {
         const res = await fetch(SHEET_URL);
         if (!res.ok) throw new Error('Não foi possível acessar a planilha');
         const text = await res.text();
         const names = text.split('\n')
-          .map(l => l.split(',')[0].replace(/"/g, '').trim())
+          .map(l => l.split(',')[0].replace(/"/g,'').trim())
           .filter(n => n && !/^(nome|closer|name|sdr)$/i.test(n));
         if (!names.length) throw new Error('Nenhum nome encontrado');
         closers = names;
@@ -461,11 +592,12 @@
         showStatus(`${names.length} closers carregados.`, 'success');
       } catch(e) {
         showStatus('Erro: ' + e.message, 'error');
-        document.getElementById('closer-name').textContent = 'Erro ao carregar';
-        document.getElementById('closer-name').classList.add('muted');
+        nameEl.textContent = 'Erro ao carregar';
+        nameEl.classList.add('muted');
       }
     }
 
+    initFilter();
     restore();
     fetchSheet();
   </script>
