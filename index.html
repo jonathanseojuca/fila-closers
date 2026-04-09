@@ -6,6 +6,8 @@
 
 <title>Fila de Closers Mercadinho do Seo Juca</title>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
 :root {
   --accent: #033517;
@@ -13,64 +15,53 @@
 }
 
 body {
-  font-family: Arial, sans-serif;
+  font-family: Arial;
   background: var(--bg);
   display: flex;
   justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
-
-.card {
-  background: white;
+  align-items: flex-start;
+  gap: 20px;
   padding: 30px;
-  border-radius: 12px;
-  width: 380px;
-  text-align: center;
 }
 
-h1 {
-  font-size: 18px;
-  margin-bottom: 20px;
+.card, .chart-card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  width: 350px;
 }
 
 .closer {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: bold;
   margin-bottom: 20px;
-}
-
-label {
-  font-size: 12px;
-  display: block;
-  text-align: left;
-  margin-top: 8px;
+  text-align: center;
 }
 
 input, select {
   width: 100%;
   padding: 10px;
-  margin-bottom: 8px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  margin-bottom: 10px;
 }
 
 button {
   width: 100%;
   padding: 12px;
-  border: none;
-  cursor: pointer;
-  border-radius: 6px;
   margin-top: 5px;
+  cursor: pointer;
 }
 
 .primary {
   background: var(--accent);
   color: white;
+  border: none;
 }
 
-.secondary {
-  background: #eee;
+.total {
+  font-size: 22px;
+  font-weight: bold;
+  text-align: center;
+  margin: 10px 0;
 }
 </style>
 </head>
@@ -79,21 +70,33 @@ button {
 
 <div class="card">
 
-  <h1>Fila de Closers<br>Mercadinho do Seo Juca</h1>
+  <h3>Fila de Closers</h3>
 
   <div class="closer" id="closer">Carregando...</div>
 
   <label>SDR</label>
   <select id="sdr"></select>
 
-  <label>Nome do Lead</label>
-  <input id="lead" placeholder="Digite o nome do Lead">
+  <label>Lead</label>
+  <input id="lead">
 
   <label>Data da Reunião</label>
   <input type="date" id="data_reuniao">
 
-  <button class="secondary" onclick="nextCloser()">Pular</button>
-  <button class="primary" onclick="agendar()">Reunião Agendada</button>
+  <button onclick="nextCloser()">Pular</button>
+  <button class="primary" onclick="agendar()">Agendar</button>
+
+</div>
+
+<div class="chart-card">
+
+  <h3>Reuniões por dia</h3>
+
+  <input type="date" id="filtroData" onchange="loadStats()">
+
+  <div class="total" id="total">0 reuniões</div>
+
+  <canvas id="chart"></canvas>
 
 </div>
 
@@ -101,104 +104,115 @@ button {
 
 const CLOSERS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXQEJMybM1mJ2X-Mf_EzgrCBoLt_t7leS7yI1cw_C2_g_iAc19TjHypB69AlKmR9v5Ay5Nn8g6G55o/pub?output=csv";
 const SDR_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXQEJMybM1mJ2X-Mf_EzgrCBoLt_t7leS7yI1cw_C2_g_iAc19TjHypB69AlKmR9v5Ay5Nn8g6G55o/pub?gid=1360192723&output=csv";
+const AGENDAMENTOS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXQEJMybM1mJ2X-Mf_EzgrCBoLt_t7leS7yI1cw_C2_g_iAc19TjHypB69AlKmR9v5Ay5Nn8g6G55o/pub?gid=1127809379&output=csv";
 const WEBHOOK_URL = "https://hook.us2.make.com/xh4sxhoftr8gyemrd18rjw9brksguzda";
 
 let closers = [];
-let sdrs = [];
 let index = 0;
+let chart;
 
-// carregar closers
+// closers
 async function loadClosers() {
   const res = await fetch(CLOSERS_URL);
   const text = await res.text();
 
-  closers = text.split("\n")
-    .slice(1)
-    .map(l => l.replace(/"/g,"").trim())
-    .filter(l => l);
-
+  closers = text.split("\n").slice(1).map(l => l.trim()).filter(l => l);
   render();
 }
 
-// carregar SDRs
+// SDR
 async function loadSDRs() {
   const res = await fetch(SDR_URL);
   const text = await res.text();
 
-  sdrs = text.split("\n")
-    .slice(1)
-    .map(l => l.replace(/"/g,"").trim())
-    .filter(l => l);
+  const sdrs = text.split("\n").slice(1).map(l => l.trim()).filter(l => l);
 
-  const select = document.getElementById("sdr");
-
-  select.innerHTML = `
-    <option value="">Selecione um SDR</option>
-    ${sdrs.map(s => `<option value="${s}">${s}</option>`).join("")}
-  `;
+  document.getElementById("sdr").innerHTML =
+    `<option value="">Selecione</option>` +
+    sdrs.map(s => `<option>${s}</option>`).join("");
 }
 
-// render closer atual
+// render
 function render() {
-  const el = document.getElementById("closer");
-
-  if (!closers.length) {
-    el.innerText = "Sem closers";
-    return;
-  }
-
-  el.innerText = closers[index % closers.length];
+  if (!closers.length) return;
+  document.getElementById("closer").innerText =
+    closers[index % closers.length];
 }
 
-// próximo closer
+// próximo
 function nextCloser() {
   index++;
   render();
 }
 
-// agendar reunião
+// agendar
 async function agendar() {
   const sdr = document.getElementById("sdr").value;
-  const lead = document.getElementById("lead").value.trim();
-  const dataReuniao = document.getElementById("data_reuniao").value;
+  const lead = document.getElementById("lead").value;
+  const data = document.getElementById("data_reuniao").value;
 
-  if (!sdr || !lead || !dataReuniao) {
-    alert("Preencha todos os campos");
-    return;
-  }
+  if (!sdr || !lead || !data) return alert("Preencha tudo");
 
-  const closer = closers[index % closers.length];
+  await fetch(WEBHOOK_URL, {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      closer: closers[index % closers.length],
+      sdr,
+      lead,
+      data_reuniao: data
+    })
+  });
 
-  try {
-    await fetch(WEBHOOK_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        closer: closer,
-        sdr: sdr,
-        lead: lead,
-        data_reuniao: dataReuniao
-      })
-    });
+  index++;
+  render();
+  loadStats();
+}
 
-    document.getElementById("lead").value = "";
+// stats
+async function loadStats() {
+  const res = await fetch(AGENDAMENTOS_URL);
+  const text = await res.text();
 
-    index++;
-    render();
+  const rows = text.split("\n").slice(1).map(r => r.split(","));
 
-    alert("Reunião registrada com sucesso!");
+  const filtro = document.getElementById("filtroData").value;
 
-  } catch (err) {
-    alert("Erro ao enviar dados");
-    console.error(err);
-  }
+  const counts = {};
+  let total = 0;
+
+  rows.forEach(r => {
+    const closer = r[0];
+    const data = r[3];
+
+    if (!filtro || data === filtro) {
+      counts[closer] = (counts[closer] || 0) + 1;
+      total++;
+    }
+  });
+
+  document.getElementById("total").innerText = total + " reuniões";
+
+  const labels = Object.keys(counts);
+  const dataVals = Object.values(counts);
+
+  if (chart) chart.destroy();
+
+  chart = new Chart(document.getElementById("chart"), {
+    type: 'pie',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: dataVals
+      }]
+    }
+  });
 }
 
 // init
 loadClosers();
 loadSDRs();
+loadStats();
 
 </script>
 
