@@ -440,15 +440,14 @@
 <div id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════
-//  CONFIG
-// ══════════════════════════════════════════════
 const SHEET_BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQXQEJMybM1mJ2X-Mf_EzgrCBoLt_t7leS7yI1cw_C2_g_iAc19TjHypB69AlKmR9v5Ay5Nn8g6G55o/pub';
 const GID_AGEND  = '1127809379';
 const GID_SDR    = '1360192723';
 const WEBHOOK    = 'https://hook.us2.make.com/xh4sxhoftr8gyemrd18rjw9brksguzda';
 
+// Estado global — closers e índice NUNCA são resetados após o carregamento inicial
 let closers      = [];
+let closersLoaded = false;
 let closerIndex  = 0;
 let agendamentos = [];
 let filterDate   = new Date();
@@ -459,7 +458,6 @@ function fmtDate(d) {
 }
 function isoDate(d) { return d.toISOString().split('T')[0]; }
 
-// Extrai DD/MM/YYYY de qualquer formato
 function extractDatePart(str) {
   if (!str) return '';
   const m1 = str.match(/^(\d{2}\/\d{2}\/\d{4})/);
@@ -521,12 +519,16 @@ async function loadSDRs() {
   } catch(e) { console.error('SDR:', e); toast('Erro ao carregar SDRs', false); }
 }
 
-// ── LOAD CLOSERS (col B da aba SDR) ──
+// ── LOAD CLOSERS (col B da aba SDR) — só carrega UMA VEZ ──
 async function loadClosers() {
+  if (closersLoaded) return; // nunca reseta
   try {
     const rows = parseCSVRaw(await fetchRaw(GID_SDR));
     const names = [...new Set(rows.slice(1).map(c => c[1]).filter(Boolean))];
-    if (names.length) closers = names.map(n => ({name: n, initials: initials(n)}));
+    if (names.length) {
+      closers = names.map(n => ({name: n, initials: initials(n)}));
+      closersLoaded = true;
+    }
   } catch(e) { console.error('Closers:', e); }
 }
 
@@ -543,10 +545,13 @@ async function loadAgendamentos() {
       lead:     cols[4] || '',
     })).filter(r => r.carimbo || r.sdr);
 
-    // Fallback: extrair closers da col D se não vieram da aba SDR
-    if (closers.length === 0) {
+    // Fallback: se closers ainda não vieram da aba SDR, extrai da col D — só uma vez
+    if (!closersLoaded && agendamentos.length > 0) {
       const names = [...new Set(agendamentos.map(r => r.closer).filter(Boolean))];
-      closers = names.map(n => ({name: n, initials: initials(n)}));
+      if (names.length) {
+        closers = names.map(n => ({name: n, initials: initials(n)}));
+        closersLoaded = true;
+      }
     }
 
     updateNextCloser();
@@ -576,7 +581,8 @@ function renderScoreboard() {
   agendamentos.forEach(row => {
     const dataPart = extractDatePart(row.carimbo);
     if (dataPart === todayBR && row.closer) {
-      counts.hasOwnProperty(row.closer) ? counts[row.closer]++ : (counts[row.closer] = 1);
+      if (counts.hasOwnProperty(row.closer)) counts[row.closer]++;
+      else counts[row.closer] = 1;
     }
   });
 
@@ -597,7 +603,7 @@ function renderScoreboard() {
   });
 }
 
-// ── TABELA (filtra por col C = Data Reunião) ──
+// ── TABELA ──
 function renderTable() {
   const tbody    = document.getElementById('table-body');
   const filterBR = fmtDate(filterDate);
@@ -630,7 +636,7 @@ function updateNextCloser() {
   el.textContent = closers.length ? closers[closerIndex].name : 'Carregando...';
 }
 
-// ── AGENDAR ──
+// ── AGENDAR — envia cada campo separado via FormData ──
 document.getElementById('btn-schedule').addEventListener('click', async () => {
   const sdr  = document.getElementById('sdr-select').value;
   const data = document.getElementById('meeting-date').value;
@@ -648,18 +654,24 @@ document.getElementById('btn-schedule').addEventListener('click', async () => {
   const [y,m,d] = data.split('-');
   const dataFormatada = `${d}/${m}/${y}`;
 
+  // FormData envia cada campo individualmente — Make recebe como variáveis separadas
+  const fd = new FormData();
+  fd.append('sdr',          sdr);
+  fd.append('closer',       closer);
+  fd.append('data_reuniao', dataFormatada);
+  fd.append('nome_lead',    lead);
+  fd.append('timestamp',    new Date().toLocaleString('pt-BR'));
+
   try {
-    await fetch(WEBHOOK, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      mode: 'no-cors',
-      body: JSON.stringify({ sdr, closer, data_reuniao: dataFormatada, nome_lead: lead, timestamp: new Date().toLocaleString('pt-BR') })
-    });
+    await fetch(WEBHOOK, { method: 'POST', mode: 'no-cors', body: fd });
 
     toast(`✅ Agendado! ${closer} recebeu a reunião de ${lead}.`);
+
+    // Avança o rodízio
     closerIndex = (closerIndex + 1) % closers.length;
     updateNextCloser();
     renderScoreboard();
+
     document.getElementById('lead-name').value = '';
     setTimeout(loadAgendamentos, 4000);
   } catch(e) {
@@ -669,17 +681,20 @@ document.getElementById('btn-schedule').addEventListener('click', async () => {
   }
 });
 
-// Pular closer
+// ── PULAR CLOSER ──
 document.getElementById('btn-skip').addEventListener('click', () => {
   if (!closers.length) return;
   const pulado = closers[closerIndex].name;
   closerIndex = (closerIndex + 1) % closers.length;
-  updateNextCloser(); renderScoreboard();
-  toast(`⏭ ${pulado} pulado. Próximo: ${closers[closerIndex].name}`);
+  const proximo = closers[closerIndex].name;
+  updateNextCloser();
+  renderScoreboard();
+  toast(`⏭ ${pulado} pulado. Próximo: ${proximo}`);
 });
 
 document.getElementById('btn-prev').addEventListener('click', () => { filterDate.setDate(filterDate.getDate()-1); renderTable(); });
 document.getElementById('btn-next').addEventListener('click', () => { filterDate.setDate(filterDate.getDate()+1); renderTable(); });
+
 document.getElementById('btn-refresh').addEventListener('click', async () => {
   const btn = document.getElementById('btn-refresh');
   btn.textContent = '⟳ Atualizando...';
@@ -689,7 +704,7 @@ document.getElementById('btn-refresh').addEventListener('click', async () => {
 
 document.getElementById('meeting-date').value = isoDate(new Date());
 
-// INIT
+// ── INIT ──
 (async () => {
   await Promise.all([loadSDRs(), loadClosers()]);
   await loadAgendamentos();
