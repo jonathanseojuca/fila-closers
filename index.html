@@ -600,37 +600,60 @@ async function fetchRaw(gid) {
 function calcNextCloser() {
   if (!closers.length) return { index: 0, name: '—' };
 
-  // Conta total histórico por closer (ignora registros de pulo)
+  const n = closers.length;
+
+  // 1. Conta histórico total por closer
   const counts = {};
   closers.forEach(c => counts[c.name] = 0);
-
   agendamentos.forEach(row => {
-    if (!row.closer) return;
-    if (counts.hasOwnProperty(row.closer)) counts[row.closer]++;
-    else counts[row.closer] = 1;
+    if (row.closer && counts.hasOwnProperty(row.closer))
+      counts[row.closer]++;
   });
 
-  // Menor contagem, respeitando pulos locais da sessão
-  // Tenta até passar por todos (caso todos estejam pulados)
-  const total = closers.length;
-  for (let attempt = 0; attempt < total; attempt++) {
-    const minCount = Math.min(...closers
-      .filter(c => !skippedThisSession.has(c.name))
-      .map(c => counts[c.name] ?? 0)
-    );
-    const eligible = closers.filter(c =>
-      !skippedThisSession.has(c.name) &&
-      (counts[c.name] ?? 0) === minCount
-    );
-    if (eligible.length > 0) {
-      const chosen = eligible[0]; // ordem da lista = desempate
-      const idx = closers.indexOf(chosen);
-      return { index: idx, name: chosen.name };
+  // 2. Descobre o índice do último closer que recebeu
+  //    (mais recente pelo carimbo)
+  let lastIdx = -1;
+  if (agendamentos.length > 0) {
+    const sorted = [...agendamentos]
+      .filter(r => r.closer && r.carimbo)
+      .sort((a, b) => (a.carimbo > b.carimbo ? -1 : 1));
+    for (const row of sorted) {
+      const idx = closers.findIndex(c => c.name === row.closer);
+      if (idx !== -1) { lastIdx = idx; break; }
     }
-    // Se todos pulados, reseta e começa de novo
-    skippedThisSession.clear();
   }
-  // Fallback
+
+  // 3. Percorre em ordem circular a partir do PRÓXIMO após o último
+  //    Menor contagem + ordem circular = desempate justo
+  const available = closers.filter(c => !skippedThisSession.has(c.name));
+  if (!available.length) skippedThisSession.clear();
+
+  const minCount = Math.min(
+    ...closers
+      .filter(c => !skippedThisSession.has(c.name))
+      .map(c => counts[c.name])
+  );
+
+  // Varredura circular a partir do próximo após o último
+  const start = (lastIdx + 1) % n;
+  for (let offset = 0; offset < n; offset++) {
+    const idx = (start + offset) % n;
+    const c = closers[idx];
+    if (!skippedThisSession.has(c.name) && counts[c.name] === minCount) {
+      return { index: idx, name: c.name };
+    }
+  }
+
+  // 4. Fallback: todos pulados — reseta e repete
+  skippedThisSession.clear();
+  for (let offset = 0; offset < n; offset++) {
+    const idx = (start + offset) % n;
+    const c = closers[idx];
+    if (counts[c.name] === minCount) {
+      return { index: idx, name: c.name };
+    }
+  }
+
   return { index: 0, name: closers[0].name };
 }
 
