@@ -232,6 +232,27 @@
       color: var(--yellow);
     }
     .closer-count-label { font-size: .65rem; color: #888; letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+    .closer-month {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+    .closer-month .month-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.3rem;
+      color: var(--yellow);
+      opacity: .75;
+    }
+    .closer-month .month-label {
+      font-size: .6rem;
+      color: #666;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
 
     /* total badge */
     .total-bar {
@@ -393,7 +414,12 @@
 
     <!-- Scoreboard closers -->
     <div class="card">
-      <div class="card-title">🏆 Placar de Closers – Hoje</div>
+      <div class="card-title">🏆 Placar de Closers</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <button class="nav-btn" id="score-prev">◀</button>
+        <div class="date-display" id="score-date-label" style="min-width:130px;text-align:center;"></div>
+        <button class="nav-btn" id="score-next">▶</button>
+      </div>
       <div class="total-bar" style="margin-bottom:20px">
         <div>
           <div class="tb-label">Total de agendamentos</div>
@@ -445,25 +471,43 @@ const GID_AGEND  = '1127809379';
 const GID_SDR    = '1360192723';
 const WEBHOOK    = 'https://hook.us2.make.com/xh4sxhoftr8gyemrd18rjw9brksguzda';
 
-// Estado global — closers e índice NUNCA são resetados após o carregamento inicial
-let closers      = [];
+let closers       = [];
 let closersLoaded = false;
-let closerIndex  = 0;
-let agendamentos = [];
-let filterDate   = new Date();
+let closerIndex   = 0;
+let agendamentos  = [];
+let filterDate    = new Date();       // filtro tabela
+let scoreDate     = new Date();       // filtro placar
 
 // ── UTILS ──
 function fmtDate(d) {
   return d.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric'});
 }
+function fmtMonthYear(d) {
+  return d.toLocaleDateString('pt-BR', {month:'long', year:'numeric'});
+}
 function isoDate(d) { return d.toISOString().split('T')[0]; }
 
+// Extrai DD/MM/YYYY de qualquer formato
 function extractDatePart(str) {
   if (!str) return '';
-  const m1 = str.match(/^(\d{2}\/\d{2}\/\d{4})/);
+  const m1 = str.match(/(\d{2}\/\d{2}\/\d{4})/);
   if (m1) return m1[1];
-  const m2 = str.match(/^(\d{4}-\d{2}-\d{2})/);
+  const m2 = str.match(/(\d{4}-\d{2}-\d{2})/);
   if (m2) { const [y,mo,d] = m2[1].split('-'); return `${d}/${mo}/${y}`; }
+  return str;
+}
+
+// Converte DD/MM/YYYY → Date
+function parseBRDate(str) {
+  const [d,m,y] = str.split('/');
+  return new Date(+y, +m-1, +d);
+}
+
+// Formata data ISO input (YYYY-MM-DD) → DD/MM/YYYY para exibição
+function isoToBR(str) {
+  if (!str) return '—';
+  const m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
   return str;
 }
 
@@ -509,7 +553,7 @@ async function loadSDRs() {
     const sel = document.getElementById('sdr-select');
     sel.innerHTML = '<option value="">Selecione seu nome</option>';
     rows.slice(1).forEach(cols => {
-      const name = cols[0];
+      const name = (cols[0]||'').trim();
       if (name) {
         const opt = document.createElement('option');
         opt.value = name; opt.textContent = name;
@@ -519,38 +563,51 @@ async function loadSDRs() {
   } catch(e) { console.error('SDR:', e); toast('Erro ao carregar SDRs', false); }
 }
 
-// ── LOAD CLOSERS (col B da aba SDR) — só carrega UMA VEZ ──
+// ── LOAD CLOSERS ──
+// Tenta col B da aba SDR primeiro; se vazia, usa col A como closers.
+// A lista é carregada UMA ÚNICA VEZ e nunca sobrescrita.
 async function loadClosers() {
-  if (closersLoaded) return; // nunca reseta
+  if (closersLoaded) return;
   try {
     const rows = parseCSVRaw(await fetchRaw(GID_SDR));
-    const names = [...new Set(rows.slice(1).map(c => c[1]).filter(Boolean))];
+    const dataRows = rows.slice(1);
+
+    // Tenta col B (índice 1)
+    let names = [...new Set(dataRows.map(c => (c[1]||'').trim()).filter(Boolean))];
+
+    // Se col B vazia, usa col A (os SDRs também são closers? Fallback)
+    if (!names.length) {
+      names = [...new Set(dataRows.map(c => (c[0]||'').trim()).filter(Boolean))];
+    }
+
     if (names.length) {
       closers = names.map(n => ({name: n, initials: initials(n)}));
       closersLoaded = true;
+      console.log('Closers carregados:', closers.map(c=>c.name));
     }
   } catch(e) { console.error('Closers:', e); }
 }
 
 // ── LOAD AGENDAMENTOS ──
-// Cols: A=Carimbo | B=SDR | C=Data Reunião | D=Closer | E=Lead
+// Cols fixas: A=Carimbo | B=SDR | C=Data 1ª Reunião | D=Closer | E=Lead
 async function loadAgendamentos() {
   try {
     const rows = parseCSVRaw(await fetchRaw(GID_AGEND));
     agendamentos = rows.slice(1).map(cols => ({
-      carimbo:  cols[0] || '',
-      sdr:      cols[1] || '',
-      dataReun: cols[2] || '',
-      closer:   cols[3] || '',
-      lead:     cols[4] || '',
-    })).filter(r => r.carimbo || r.sdr);
+      carimbo:  (cols[0]||'').trim(),
+      sdr:      (cols[1]||'').trim(),
+      dataReun: (cols[2]||'').trim(),
+      closer:   (cols[3]||'').trim(),
+      lead:     (cols[4]||'').trim(),
+    })).filter(r => r.sdr || r.carimbo);
 
-    // Fallback: se closers ainda não vieram da aba SDR, extrai da col D — só uma vez
-    if (!closersLoaded && agendamentos.length > 0) {
+    // Fallback closers da col D — só se ainda não carregados
+    if (!closersLoaded) {
       const names = [...new Set(agendamentos.map(r => r.closer).filter(Boolean))];
       if (names.length) {
         closers = names.map(n => ({name: n, initials: initials(n)}));
         closersLoaded = true;
+        console.log('Closers (fallback agend):', closers.map(c=>c.name));
       }
     }
 
@@ -564,31 +621,48 @@ async function loadAgendamentos() {
   }
 }
 
-// ── SCOREBOARD ──
+// ── SCOREBOARD — navegável por dia e com acumulado mensal ──
 function renderScoreboard() {
-  const board   = document.getElementById('scoreboard');
-  const totalEl = document.getElementById('total-today');
-  const todayBR = fmtDate(new Date());
+  const board    = document.getElementById('scoreboard');
+  const totalEl  = document.getElementById('total-today');
+  const scoreBR  = fmtDate(scoreDate);
+  const scoreM   = scoreDate.getMonth();
+  const scoreY   = scoreDate.getFullYear();
+
+  // Atualiza label do placar
+  document.getElementById('score-date-label').textContent = scoreBR;
 
   if (!closers.length) {
     board.innerHTML = '<div class="empty-state">Nenhum closer encontrado na planilha</div>';
     totalEl.textContent = '0'; return;
   }
 
-  const counts = {};
-  closers.forEach(c => counts[c.name] = 0);
+  const countDay   = {};
+  const countMonth = {};
+  closers.forEach(c => { countDay[c.name] = 0; countMonth[c.name] = 0; });
 
   agendamentos.forEach(row => {
-    const dataPart = extractDatePart(row.carimbo);
-    if (dataPart === todayBR && row.closer) {
-      if (counts.hasOwnProperty(row.closer)) counts[row.closer]++;
-      else counts[row.closer] = 1;
+    if (!row.closer) return;
+    const dp = extractDatePart(row.carimbo);
+    if (!dp) return;
+    const dt = parseBRDate(dp);
+    if (isNaN(dt)) return;
+
+    // Acumulado do dia selecionado
+    if (dp === scoreBR) {
+      if (countDay.hasOwnProperty(row.closer)) countDay[row.closer]++;
+      else countDay[row.closer] = 1;
+    }
+    // Acumulado do mês do dia selecionado
+    if (dt.getMonth() === scoreM && dt.getFullYear() === scoreY) {
+      if (countMonth.hasOwnProperty(row.closer)) countMonth[row.closer]++;
+      else countMonth[row.closer] = 1;
     }
   });
 
-  const total = Object.values(counts).reduce((a,b)=>a+b,0);
-  totalEl.textContent = total;
-  document.getElementById('today-label').textContent = `hoje – ${todayBR}`;
+  const totalDay = Object.values(countDay).reduce((a,b)=>a+b,0);
+  totalEl.textContent = totalDay;
+  document.getElementById('today-label').textContent = scoreBR;
 
   board.innerHTML = '';
   closers.forEach((c, i) => {
@@ -597,8 +671,12 @@ function renderScoreboard() {
     div.innerHTML = `
       <div class="closer-avatar">${c.initials}</div>
       <div class="closer-name">${c.name}</div>
-      <div class="closer-count">${counts[c.name] ?? 0}</div>
-      <div class="closer-count-label">reuniões hoje</div>`;
+      <div class="closer-count">${countDay[c.name] ?? 0}</div>
+      <div class="closer-count-label">reuniões neste dia</div>
+      <div class="closer-month">
+        <span class="month-num">${countMonth[c.name] ?? 0}</span>
+        <span class="month-label">no mês</span>
+      </div>`;
     board.appendChild(div);
   });
 }
@@ -618,12 +696,14 @@ function renderTable() {
 
   tbody.innerHTML = '';
   filtered.forEach((row, i) => {
+    // dataReun pode vir como DD/MM/YYYY ou YYYY-MM-DD
+    const dataExib = extractDatePart(row.dataReun) || isoToBR(row.dataReun) || row.dataReun || '—';
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${i+1}</td>
       <td>${extractDatePart(row.carimbo) || '—'}</td>
       <td><span class="badge-sdr">${row.sdr || '—'}</span></td>
-      <td>${row.dataReun || '—'}</td>
+      <td>${dataExib}</td>
       <td><span class="badge-closer">${row.closer || '—'}</span></td>
       <td>${row.lead || '—'}</td>`;
     tbody.appendChild(tr);
@@ -633,10 +713,15 @@ function renderTable() {
 // ── PRÓXIMO CLOSER ──
 function updateNextCloser() {
   const el = document.getElementById('next-closer-name');
-  el.textContent = closers.length ? closers[closerIndex].name : 'Carregando...';
+  if (closers.length === 0) { el.textContent = 'Carregando...'; return; }
+  if (closers.length === 1) {
+    el.textContent = closers[0].name + ' (único closer)';
+  } else {
+    el.textContent = closers[closerIndex].name;
+  }
 }
 
-// ── AGENDAR — envia cada campo separado via FormData ──
+// ── AGENDAR ──
 document.getElementById('btn-schedule').addEventListener('click', async () => {
   const sdr  = document.getElementById('sdr-select').value;
   const data = document.getElementById('meeting-date').value;
@@ -654,7 +739,6 @@ document.getElementById('btn-schedule').addEventListener('click', async () => {
   const [y,m,d] = data.split('-');
   const dataFormatada = `${d}/${m}/${y}`;
 
-  // FormData envia cada campo individualmente — Make recebe como variáveis separadas
   const fd = new FormData();
   fd.append('sdr',          sdr);
   fd.append('closer',       closer);
@@ -667,11 +751,11 @@ document.getElementById('btn-schedule').addEventListener('click', async () => {
 
     toast(`✅ Agendado! ${closer} recebeu a reunião de ${lead}.`);
 
-    // Avança o rodízio
-    closerIndex = (closerIndex + 1) % closers.length;
+    if (closers.length > 1) {
+      closerIndex = (closerIndex + 1) % closers.length;
+    }
     updateNextCloser();
     renderScoreboard();
-
     document.getElementById('lead-name').value = '';
     setTimeout(loadAgendamentos, 4000);
   } catch(e) {
@@ -684,6 +768,7 @@ document.getElementById('btn-schedule').addEventListener('click', async () => {
 // ── PULAR CLOSER ──
 document.getElementById('btn-skip').addEventListener('click', () => {
   if (!closers.length) return;
+  if (closers.length === 1) { toast('Apenas 1 closer cadastrado — impossível pular.', false); return; }
   const pulado = closers[closerIndex].name;
   closerIndex = (closerIndex + 1) % closers.length;
   const proximo = closers[closerIndex].name;
@@ -692,8 +777,13 @@ document.getElementById('btn-skip').addEventListener('click', () => {
   toast(`⏭ ${pulado} pulado. Próximo: ${proximo}`);
 });
 
+// ── NAVEGAÇÃO TABELA ──
 document.getElementById('btn-prev').addEventListener('click', () => { filterDate.setDate(filterDate.getDate()-1); renderTable(); });
 document.getElementById('btn-next').addEventListener('click', () => { filterDate.setDate(filterDate.getDate()+1); renderTable(); });
+
+// ── NAVEGAÇÃO PLACAR ──
+document.getElementById('score-prev').addEventListener('click', () => { scoreDate.setDate(scoreDate.getDate()-1); renderScoreboard(); });
+document.getElementById('score-next').addEventListener('click', () => { scoreDate.setDate(scoreDate.getDate()+1); renderScoreboard(); });
 
 document.getElementById('btn-refresh').addEventListener('click', async () => {
   const btn = document.getElementById('btn-refresh');
