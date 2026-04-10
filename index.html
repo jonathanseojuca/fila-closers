@@ -467,15 +467,13 @@
 
 <script>
 const SHEET_BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQXQEJMybM1mJ2X-Mf_EzgrCBoLt_t7leS7yI1cw_C2_g_iAc19TjHypB69AlKmR9v5Ay5Nn8g6G55o/pub';
-const GID_CLOSERS = '0';           // aba "closers", col A, cabeçalho "Closer"
-const GID_AGEND   = '1127809379'; // aba agendamentos
-const GID_SDR     = '1360192723'; // aba SDR
+const GID_CLOSERS = '0';
+const GID_AGEND   = '1127809379';
+const GID_SDR     = '1360192723';
 const WEBHOOK     = 'https://hook.us2.make.com/xh4sxhoftr8gyemrd18rjw9brksguzda';
 
-// ── ESTADO ──
 let closers       = [];
 let closersLoaded = false;
-let closerIndex   = 0;   // sempre lido da planilha antes de usar
 let agendamentos  = [];
 let filterDate    = new Date();
 let scoreDate     = new Date();
@@ -494,22 +492,18 @@ function extractDatePart(str) {
   if (m2) { const [y,mo,d] = m2[1].split('-'); return `${d}/${mo}/${y}`; }
   return str;
 }
-
 function parseBRDate(str) {
-  const p = str.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  const p = (str||'').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   if (!p) return new Date(NaN);
   return new Date(+p[3], +p[2]-1, +p[1]);
 }
-
 function isoToBR(str) {
   const m = (str||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (m) return `${m[3]}/${m[2]}/${m[1]}`;
   return str || '—';
 }
-
 function parseCSVRaw(text) {
-  const lines = text.trim().split('\n');
-  return lines.map(line => {
+  return text.trim().split('\n').map(line => {
     const cols = []; let cur = '', inQ = false;
     for (let ch of line) {
       if (ch === '"') { inQ = !inQ; }
@@ -520,11 +514,9 @@ function parseCSVRaw(text) {
     return cols;
   });
 }
-
 function initials(name) {
   return (name||'').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
 }
-
 function toast(msg, ok=true) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -533,46 +525,56 @@ function toast(msg, ok=true) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3500);
 }
-
-// ── FETCH CSV ──
 async function fetchRaw(gid) {
-  const url = `${SHEET_BASE}?gid=${gid}&single=true&output=csv&cb=${Date.now()}`;
-  const r = await fetch(url);
+  const r = await fetch(`${SHEET_BASE}?gid=${gid}&single=true&output=csv&cb=${Date.now()}`);
   if (!r.ok) throw new Error('HTTP ' + r.status);
   return r.text();
 }
 
 // ══════════════════════════════════════════════════════════
-//  ÍNDICE COMPARTILHADO — lido e escrito via webhook/planilha
+//  ALGORITMO DE FILA JUSTO
 //
-//  Estratégia: o índice atual do closer fica salvo na PRÓPRIA
-//  planilha (o Make grava em uma célula da aba closers).
-//  A cada carregamento buscamos o valor.
-//  Enquanto o Make não implementar a escrita, usamos o último
-//  agendamento do dia para deduzir qual é o próximo.
+//  Em vez de guardar um índice (que dessincroniza entre
+//  computadores), calculamos o próximo closer a partir dos
+//  dados reais da planilha usando duas regras:
+//
+//  1. MENOR CONTAGEM HOJE: o closer com menos reuniões no dia
+//     recebe a próxima — garante distribuição equilibrada.
+//
+//  2. ORDEM DA LISTA como critério de desempate: se dois têm
+//     igual contagem, o que aparece primeiro na lista (por
+//     ordem de cadastro na aba "closers") vai na frente.
+//
+//  Isso é determinístico: qualquer computador com os mesmos
+//  dados chega ao mesmo resultado. Sem índice para sincronizar.
 // ══════════════════════════════════════════════════════════
+function calcNextCloser() {
+  if (!closers.length) return { index: 0, name: '—' };
 
-// Deduz o próximo índice olhando o último closer que recebeu
-// agendamento hoje — o próximo é o seguinte na lista circular.
-function deduceIndexFromAgendamentos() {
-  if (!closers.length || !agendamentos.length) return 0;
   const todayBR = fmtDate(new Date());
 
-  // Pega todos agendamentos de hoje, ordena pelo carimbo (mais recente último)
-  const hoje = agendamentos
-    .filter(r => extractDatePart(r.carimbo) === todayBR && r.closer)
-    .sort((a, b) => {
-      // Ordena por carimbo texto — funciona para DD/MM/YYYY HH:MM:SS
-      return (a.carimbo > b.carimbo) ? 1 : -1;
-    });
+  // Conta reuniões reais de cada closer hoje (ignora pulos)
+  const counts = {};
+  closers.forEach(c => counts[c.name] = 0);
 
-  if (!hoje.length) return 0; // nenhum agendamento hoje → começa no 0
+  agendamentos.forEach(row => {
+    if (!row.closer || row.lead === '__PULO__') return;
+    if (extractDatePart(row.carimbo) === todayBR) {
+      if (counts.hasOwnProperty(row.closer)) counts[row.closer]++;
+    }
+  });
 
-  const ultimoCloser = hoje[hoje.length - 1].closer;
-  const idx = closers.findIndex(c => c.name === ultimoCloser);
-  if (idx === -1) return 0;
-  // Próximo é o seguinte ao último que recebeu
-  return (idx + 1) % closers.length;
+  // Encontra a menor contagem
+  const min = Math.min(...Object.values(counts));
+
+  // Pega o primeiro closer (por ordem na lista) com contagem mínima
+  const idx = closers.findIndex(c => counts[c.name] === min);
+  return { index: idx === -1 ? 0 : idx, name: closers[idx === -1 ? 0 : idx].name };
+}
+
+function getNextCloser() {
+  const { index, name } = calcNextCloser();
+  return { index, name };
 }
 
 // ── LOAD SDRs ──
@@ -585,32 +587,27 @@ async function loadSDRs() {
       const name = (cols[0]||'').trim();
       if (name) {
         const opt = document.createElement('option');
-        opt.value = name; opt.textContent = name;
-        sel.appendChild(opt);
+        opt.value = name; opt.textContent = name; sel.appendChild(opt);
       }
     });
   } catch(e) { console.error('SDR:', e); toast('Erro ao carregar SDRs', false); }
 }
 
-// ── LOAD CLOSERS — aba "closers", gid=0, col A, pula cabeçalho ──
+// ── LOAD CLOSERS — aba "closers" gid=0, col A ──
 async function loadClosers() {
   if (closersLoaded) return;
   try {
     const rows = parseCSVRaw(await fetchRaw(GID_CLOSERS));
-    // Linha 0 = cabeçalho "Closer", linha 1..N = nomes
     const names = rows.slice(1).map(c => (c[0]||'').trim()).filter(Boolean);
     if (names.length) {
       closers = names.map(n => ({name: n, initials: initials(n)}));
       closersLoaded = true;
-      console.log('Closers carregados:', closers.map(c=>c.name));
-    } else {
-      console.warn('Aba closers vazia ou sem dados na col A');
+      console.log('Closers:', closers.map(c=>c.name));
     }
   } catch(e) { console.error('Closers:', e); toast('Erro ao carregar closers', false); }
 }
 
 // ── LOAD AGENDAMENTOS ──
-// Cols: A=Carimbo(data/hora) | B=SDR | C=Data 1ª Reunião | D=Closer | E=Lead
 async function loadAgendamentos() {
   try {
     const rows = parseCSVRaw(await fetchRaw(GID_AGEND));
@@ -622,12 +619,7 @@ async function loadAgendamentos() {
       lead:     (cols[4]||'').trim(),
     })).filter(r => r.sdr || r.carimbo);
 
-    // Deduz o índice correto a partir dos agendamentos reais de hoje
-    // Isso garante sincronização entre computadores diferentes!
-    closerIndex = deduceIndexFromAgendamentos();
-    console.log('Índice deduzido:', closerIndex, '→', closers[closerIndex]?.name);
-
-    updateNextCloser();
+    updateNextCloserDisplay();
     renderScoreboard();
     renderTable();
   } catch(e) {
@@ -637,6 +629,14 @@ async function loadAgendamentos() {
   }
 }
 
+// ── EXIBE PRÓXIMO CLOSER ──
+function updateNextCloserDisplay() {
+  const el = document.getElementById('next-closer-name');
+  if (!closers.length) { el.textContent = 'Carregando...'; return; }
+  const { name } = getNextCloser();
+  el.textContent = name;
+}
+
 // ── SCOREBOARD ──
 function renderScoreboard() {
   const board    = document.getElementById('scoreboard');
@@ -644,46 +644,42 @@ function renderScoreboard() {
   const scoreBR  = fmtDate(scoreDate);
   const scoreM   = scoreDate.getMonth();
   const scoreY   = scoreDate.getFullYear();
-
   document.getElementById('score-date-label').textContent = scoreBR;
 
   if (!closers.length) {
-    board.innerHTML = '<div class="empty-state">Nenhum closer encontrado na planilha (aba "closers")</div>';
+    board.innerHTML = '<div class="empty-state">Nenhum closer encontrado na aba "closers"</div>';
     totalEl.textContent = '0'; return;
   }
 
-  const countDay   = {};
-  const countMonth = {};
+  const countDay = {}, countMonth = {};
   closers.forEach(c => { countDay[c.name] = 0; countMonth[c.name] = 0; });
 
   agendamentos.forEach(row => {
-    if (!row.closer) return;
+    if (!row.closer || row.lead === '__PULO__') return;
     const dp = extractDatePart(row.carimbo);
     if (!dp) return;
     const dt = parseBRDate(dp);
-    if (isNaN(dt)) return;
-
-    if (dp === scoreBR) {
-      countDay[row.closer]  = (countDay[row.closer]  || 0) + 1;
-    }
-    if (dt.getMonth() === scoreM && dt.getFullYear() === scoreY) {
+    if (dp === scoreBR)
+      countDay[row.closer]   = (countDay[row.closer]   || 0) + 1;
+    if (!isNaN(dt) && dt.getMonth() === scoreM && dt.getFullYear() === scoreY)
       countMonth[row.closer] = (countMonth[row.closer] || 0) + 1;
-    }
   });
 
-  const totalDay = Object.values(countDay).reduce((a,b)=>a+b,0);
+  const totalDay = Object.values(countDay).reduce((a,b)=>a+b, 0);
   totalEl.textContent = totalDay;
   document.getElementById('today-label').textContent = scoreBR;
+
+  const { index: nextIdx } = getNextCloser();
 
   board.innerHTML = '';
   closers.forEach((c, i) => {
     const div = document.createElement('div');
-    div.className = 'closer-card' + (i === closerIndex ? ' next-up' : '');
+    div.className = 'closer-card' + (i === nextIdx ? ' next-up' : '');
     div.innerHTML = `
       <div class="closer-avatar">${c.initials}</div>
       <div class="closer-name">${c.name}</div>
       <div class="closer-count">${countDay[c.name] ?? 0}</div>
-      <div class="closer-count-label">reuniões neste dia</div>
+      <div class="closer-count-label">reuniões hoje</div>
       <div class="closer-month">
         <span class="month-num">${countMonth[c.name] ?? 0}</span>
         <span class="month-label">no mês</span>
@@ -699,6 +695,7 @@ function renderTable() {
   document.getElementById('filter-date-label').textContent = filterBR;
 
   const filtered = agendamentos.filter(row => {
+    if (row.lead === '__PULO__') return false;
     const dr = extractDatePart(row.dataReun) || isoToBR(row.dataReun);
     return dr === filterBR;
   });
@@ -707,31 +704,20 @@ function renderTable() {
     tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Nenhum agendamento em ${filterBR}</td></tr>`;
     return;
   }
-
   tbody.innerHTML = '';
   filtered.forEach((row, i) => {
     const dataExib = extractDatePart(row.dataReun) || isoToBR(row.dataReun);
-    // Carimbo: mostra só DD/MM/YYYY HH:MM
-    const carimboExib = row.carimbo
-      .replace(/^(\d{2}\/\d{2}\/\d{4})[, ]+(\d{2}:\d{2}).*$/, '$1 $2')
-      || row.carimbo || '—';
+    const carimboExib = row.carimbo.replace(/^(\d{2}\/\d{2}\/\d{4})[, ]+(\d{2}:\d{2}).*$/, '$1 $2') || row.carimbo || '—';
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${i+1}</td>
       <td>${carimboExib}</td>
-      <td><span class="badge-sdr">${row.sdr || '—'}</span></td>
+      <td><span class="badge-sdr">${row.sdr||'—'}</span></td>
       <td>${dataExib}</td>
-      <td><span class="badge-closer">${row.closer || '—'}</span></td>
-      <td>${row.lead || '—'}</td>`;
+      <td><span class="badge-closer">${row.closer||'—'}</span></td>
+      <td>${row.lead||'—'}</td>`;
     tbody.appendChild(tr);
   });
-}
-
-// ── PRÓXIMO CLOSER ──
-function updateNextCloser() {
-  const el = document.getElementById('next-closer-name');
-  if (!closers.length) { el.textContent = 'Carregando...'; return; }
-  el.textContent = closers[closerIndex].name;
 }
 
 // ── AGENDAR ──
@@ -745,17 +731,15 @@ document.getElementById('btn-schedule').addEventListener('click', async () => {
   if (!data) { toast('Escolha a data da reunião!', false); return; }
   if (!closers.length) { toast('Closers não carregados!', false); return; }
 
-  const closer = closers[closerIndex].name;
+  const { name: closer } = getNextCloser();
   const btn = document.getElementById('btn-schedule');
   btn.disabled = true; btn.textContent = '⏳ Enviando...';
 
   const [y,m,d] = data.split('-');
-  const dataFormatada = `${d}/${m}/${y}`;
-
   const fd = new FormData();
   fd.append('sdr',          sdr);
   fd.append('closer',       closer);
-  fd.append('data_reuniao', dataFormatada);
+  fd.append('data_reuniao', `${d}/${m}/${y}`);
   fd.append('nome_lead',    lead);
   fd.append('timestamp',    new Date().toLocaleString('pt-BR'));
 
@@ -764,9 +748,20 @@ document.getElementById('btn-schedule').addEventListener('click', async () => {
     toast(`✅ Agendado! ${closer} recebeu a reunião de ${lead}.`);
     document.getElementById('lead-name').value = '';
 
-    // Aguarda o Make gravar na planilha e recarrega — o índice será
-    // deduzido automaticamente dos agendamentos reais
-    setTimeout(loadAgendamentos, 4000);
+    // Optimistic update: adiciona localmente para o cálculo já refletir
+    // enquanto o Make ainda não gravou na planilha
+    agendamentos.push({
+      carimbo:  new Date().toLocaleString('pt-BR'),
+      sdr,
+      dataReun: `${d}/${m}/${y}`,
+      closer,
+      lead,
+    });
+    updateNextCloserDisplay();
+    renderScoreboard();
+
+    // Confirma com dados reais após 5s
+    setTimeout(loadAgendamentos, 5000);
   } catch(e) {
     toast('Erro ao enviar. Verifique a conexão.', false);
   } finally {
@@ -774,17 +769,15 @@ document.getElementById('btn-schedule').addEventListener('click', async () => {
   }
 });
 
-// ── PULAR CLOSER — grava o pulo via webhook para sincronizar ──
+// ── PULAR CLOSER ──
 document.getElementById('btn-skip').addEventListener('click', async () => {
   if (!closers.length) return;
   if (closers.length === 1) { toast('Apenas 1 closer cadastrado — impossível pular.', false); return; }
 
-  const pulado  = closers[closerIndex].name;
-  const novoIdx = (closerIndex + 1) % closers.length;
-  const proximo = closers[novoIdx].name;
+  const { name: pulado } = getNextCloser();
 
-  // Grava pulo como agendamento especial com tipo "pulo" para que
-  // o índice seja deduzido corretamente nos outros computadores
+  // Grava pulo como registro real para que TODOS os computadores
+  // enxerguem que este closer "foi pulado" hoje
   const fd = new FormData();
   fd.append('sdr',          document.getElementById('sdr-select').value || 'Sistema');
   fd.append('closer',       pulado);
@@ -793,17 +786,23 @@ document.getElementById('btn-skip').addEventListener('click', async () => {
   fd.append('timestamp',    new Date().toLocaleString('pt-BR'));
   fd.append('tipo',         'pulo');
 
-  try {
-    await fetch(WEBHOOK, { method: 'POST', mode: 'no-cors', body: fd });
-  } catch(e) { /* silencioso */ }
+  try { await fetch(WEBHOOK, { method: 'POST', mode: 'no-cors', body: fd }); } catch(e) {}
 
-  closerIndex = novoIdx;
-  updateNextCloser();
+  // Optimistic update
+  agendamentos.push({
+    carimbo:  new Date().toLocaleString('pt-BR'),
+    sdr:      'Sistema',
+    dataReun: fmtDate(new Date()),
+    closer:   pulado,
+    lead:     '__PULO__',
+  });
+
+  const { name: proximo } = getNextCloser();
+  updateNextCloserDisplay();
   renderScoreboard();
   toast(`⏭ ${pulado} pulado. Próximo: ${proximo}`);
 
-  // Recarrega após Make processar
-  setTimeout(loadAgendamentos, 4000);
+  setTimeout(loadAgendamentos, 5000);
 });
 
 // ── NAVEGAÇÃO ──
@@ -811,7 +810,6 @@ document.getElementById('btn-prev').addEventListener('click',   () => { filterDa
 document.getElementById('btn-next').addEventListener('click',   () => { filterDate.setDate(filterDate.getDate()+1); renderTable(); });
 document.getElementById('score-prev').addEventListener('click', () => { scoreDate.setDate(scoreDate.getDate()-1);  renderScoreboard(); });
 document.getElementById('score-next').addEventListener('click', () => { scoreDate.setDate(scoreDate.getDate()+1);  renderScoreboard(); });
-
 document.getElementById('btn-refresh').addEventListener('click', async () => {
   const btn = document.getElementById('btn-refresh');
   btn.textContent = '⟳ Atualizando...';
@@ -827,7 +825,6 @@ document.getElementById('meeting-date').value = isoDate(new Date());
   await loadAgendamentos();
 })();
 
-// Auto-refresh a cada 30s para manter sincronizado entre computadores
 setInterval(loadAgendamentos, 30000);
 </script>
 </body>
