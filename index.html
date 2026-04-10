@@ -873,15 +873,15 @@ document.getElementById('btn-schedule').addEventListener('click', async () => {
     skippedThisSession.clear();
 
     // Optimistic update: insere localmente para refletir imediatamente
+    // NÃO recarrega da planilha logo após — o Make precisa de tempo para gravar.
+    // O auto-refresh de 90s vai sincronizar quando o Make já tiver processado.
     agendamentos.push({
       carimbo:  new Date().toLocaleString('pt-BR'),
       sdr, dataReun: `${d}/${m}/${y}`, closer, lead,
     });
     updateNextCloserDisplay();
     renderScoreboard();
-
-    // Confirma com dados reais após o Make processar
-    setTimeout(loadAgendamentos, 5000);
+    renderTable();
   } catch(e) {
     toast('Erro ao enviar. Verifique a conexão.', false);
   } finally {
@@ -923,7 +923,7 @@ document.getElementById('meeting-date').value = isoDate(new Date());
   await loadAgendamentos();
 })();
 
-setInterval(loadAgendamentos, 30000);
+setInterval(loadAgendamentos, 90000);
 </script>
 </body>
 </html>
