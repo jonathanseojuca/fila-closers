@@ -192,12 +192,38 @@
       text-align: center;
       position: relative;
       overflow: hidden;
-      transition: transform .2s, box-shadow .2s;
+      cursor: pointer;
+      transition: transform .2s, box-shadow .2s, border-color .2s, background .2s;
+      user-select: none;
     }
-    .closer-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(0,0,0,0.4); }
+    .closer-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 14px 32px rgba(0,0,0,0.5);
+      border-color: rgba(110,177,80,0.4);
+      background: linear-gradient(145deg, rgba(110,177,80,0.08), rgba(255,255,255,0.03));
+    }
+    .closer-card:active { transform: scale(.96); }
+
+    .closer-card .click-hint {
+      position: absolute;
+      bottom: 7px; left: 0; right: 0;
+      font-size: .58rem;
+      color: rgba(255,255,255,0.25);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0;
+      transition: opacity .2s;
+    }
+    .closer-card:hover .click-hint { opacity: 1; }
+
     .closer-card.next-up {
       border-color: var(--yellow);
-      background: linear-gradient(145deg, rgba(110,177,80,0.12), rgba(110,177,80,0.03));
+      background: linear-gradient(145deg, rgba(110,177,80,0.14), rgba(110,177,80,0.04));
+      box-shadow: 0 0 0 1px rgba(110,177,80,0.3), 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .closer-card.next-up:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 0 0 1px rgba(110,177,80,0.5), 0 14px 32px rgba(0,0,0,0.45);
     }
     .closer-card.next-up::before {
       content: '▶ PRÓXIMO';
@@ -210,6 +236,30 @@
       color: var(--dark);
       padding: 2px 6px;
       border-radius: 6px;
+    }
+
+    /* ripple ao clicar */
+    .closer-card .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(110,177,80,0.35);
+      transform: scale(0);
+      animation: ripple-anim .5s linear;
+      pointer-events: none;
+    }
+    @keyframes ripple-anim {
+      to { transform: scale(4); opacity: 0; }
+    }
+
+    /* selecionado manualmente */
+    .closer-card.selected-manual {
+      border-color: var(--yellow) !important;
+      animation: pulse-select .5s ease;
+    }
+    @keyframes pulse-select {
+      0%   { box-shadow: 0 0 0 0 rgba(110,177,80,0.7); }
+      70%  { box-shadow: 0 0 0 14px rgba(110,177,80,0); }
+      100% { box-shadow: 0 0 0 0 rgba(110,177,80,0); }
     }
     .closer-avatar {
       width: 52px; height: 52px;
@@ -691,7 +741,48 @@ function renderScoreboard() {
       <div class="closer-month">
         <span class="month-num">${countMonth[c.name] ?? 0}</span>
         <span class="month-label">no mês</span>
-      </div>`;
+      </div>
+      <div class="click-hint">clique para selecionar</div>`;
+
+    // Ripple effect
+    div.addEventListener('click', function(e) {
+      // Cria ripple
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple';
+      const rect = div.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      ripple.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px`;
+      div.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 600);
+
+      // Se já é o próximo, não faz nada
+      if (i === nextIdx) {
+        toast(`${c.name} já é o próximo! ✅`);
+        return;
+      }
+
+      // Marca todos entre nextIdx e i (exclusive) como pulados
+      // para que o algoritmo calcNextCloser() chegue em i
+      skippedThisSession.clear();
+      // Calcula quem precisa ser pulado para chegar em c.name
+      // Faz simulações até o algoritmo escolher o closer clicado
+      let tentativas = 0;
+      while (tentativas < closers.length * 2) {
+        const { name: atual } = calcNextCloser();
+        if (atual === c.name) break;
+        skippedThisSession.add(atual);
+        tentativas++;
+      }
+
+      // Feedback visual
+      div.classList.add('selected-manual');
+      setTimeout(() => div.classList.remove('selected-manual'), 600);
+
+      updateNextCloserDisplay();
+      renderScoreboard();
+      toast(`🎯 ${c.name} selecionado como próximo!`);
+    });
+
     board.appendChild(div);
   });
 }
