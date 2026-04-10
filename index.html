@@ -94,7 +94,7 @@
 
     label { font-size: .85rem; font-weight: 700; color: #aaa; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; display: block; }
 
-    select, input[type="date"] {
+    select, input[type="date"], input[type="text"] {
       width: 100%;
       padding: 13px 16px;
       background: rgba(255,255,255,0.05);
@@ -107,7 +107,7 @@
       transition: border-color .2s, box-shadow .2s;
       outline: none;
     }
-    select:focus, input[type="date"]:focus {
+    select:focus, input[type="date"]:focus, input[type="text"]:focus {
       border-color: var(--yellow);
       box-shadow: 0 0 0 3px rgba(110,177,80,0.15);
     }
@@ -368,6 +368,11 @@
     </div>
 
     <div>
+      <label>Nome do Lead</label>
+      <input type="text" id="lead-name" placeholder="Digite o nome do lead..." />
+    </div>
+
+    <div>
       <label>Data da 1ª Reunião</label>
       <input type="date" id="meeting-date" />
     </div>
@@ -415,14 +420,15 @@
           <thead>
             <tr>
               <th>#</th>
+              <th>Carimbo</th>
               <th>SDR</th>
-              <th>Closer</th>
               <th>Data Reunião</th>
-              <th>Registrado em</th>
+              <th>Closer</th>
+              <th>Lead</th>
             </tr>
           </thead>
           <tbody id="table-body">
-            <tr><td colspan="5" class="empty-state"><span class="spin">⏳</span> Carregando...</td></tr>
+            <tr><td colspan="6" class="empty-state"><span class="spin">⏳</span> Carregando...</td></tr>
           </tbody>
         </table>
       </div>
