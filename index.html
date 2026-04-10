@@ -1,220 +1,725 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fila de Closers – Mercadinho do Seo Juca</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --red:    #033517;
+      --red-dk: #022610;
+      --yellow: #6EB150;
+      --yellow-lt: #d4edba;
+      --dark:   #1A1A1A;
+      --mid:    #2E2E2E;
+      --light:  #F5F5F0;
+      --white:  #FFFFFF;
+      --card-bg: rgba(255,255,255,0.06);
+      --radius: 16px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.35);
+    }
 
-<title>Fila de Closers Mercadinho do Seo Juca</title>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--dark);
+      color: var(--white);
+      min-height: 100vh;
+      background-image:
+        radial-gradient(ellipse at 10% 20%, rgba(3,53,23,0.18) 0%, transparent 55%),
+        radial-gradient(ellipse at 90% 80%, rgba(110,177,80,0.10) 0%, transparent 55%);
+    }
 
-<style>
-:root {
-  --accent: #033517;
-  --bg: #f5f4f0;
-}
+    /* ── HEADER ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 40px;
+      background: linear-gradient(90deg, var(--red-dk) 0%, var(--red) 60%, #0a5c2a 100%);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      border-bottom: 3px solid var(--yellow);
+    }
+    .logo-wrap img { height: 64px; object-fit: contain; }
+    .header-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2rem;
+      letter-spacing: 3px;
+      color: var(--yellow);
+      text-shadow: 2px 2px 6px rgba(0,0,0,0.4);
+    }
+    .header-badge {
+      background: var(--yellow);
+      color: var(--red-dk);
+      font-weight: 900;
+      font-size: .75rem;
+      letter-spacing: 2px;
+      padding: 6px 14px;
+      border-radius: 99px;
+      text-transform: uppercase;
+    }
 
-body {
-  font-family: Arial;
-  background: var(--bg);
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 20px;
-  padding: 30px;
-}
+    /* ── LAYOUT ── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 28px;
+      padding: 32px 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
 
-.card, .chart-card {
-  background: white;
-  padding: 25px;
-  border-radius: 12px;
-  width: 350px;
-}
+    /* ── CARD BASE ── */
+    .card {
+      background: var(--mid);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.3rem;
+      letter-spacing: 2px;
+      color: var(--yellow);
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(110,177,80,0.2);
+      padding-bottom: 10px;
+    }
 
-.closer {
-  font-size: 26px;
-  font-weight: bold;
-  margin-bottom: 20px;
-  text-align: center;
-}
+    /* ── FORM ── */
+    .form-col { display: flex; flex-direction: column; gap: 16px; }
 
-input, select {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-}
+    label { font-size: .85rem; font-weight: 700; color: #aaa; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; display: block; }
 
-button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 5px;
-  cursor: pointer;
-}
+    select, input[type="date"] {
+      width: 100%;
+      padding: 13px 16px;
+      background: rgba(255,255,255,0.05);
+      border: 1.5px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      color: var(--white);
+      font-family: 'Nunito', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+    }
+    select:focus, input[type="date"]:focus {
+      border-color: var(--yellow);
+      box-shadow: 0 0 0 3px rgba(110,177,80,0.15);
+    }
+    select option { background: var(--mid); }
 
-.primary {
-  background: var(--accent);
-  color: white;
-  border: none;
-}
+    /* próximo closer destaque */
+    .next-closer-box {
+      background: linear-gradient(135deg, rgba(3,53,23,0.25), rgba(3,53,23,0.08));
+      border: 1.5px solid rgba(3,53,23,0.5);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .next-closer-box .nc-label { font-size: .75rem; color: #aaa; letter-spacing: 1px; text-transform: uppercase; }
+    .next-closer-box .nc-name { font-size: 1.4rem; font-weight: 900; color: var(--yellow); }
 
-.total {
-  font-size: 22px;
-  font-weight: bold;
-  text-align: center;
-  margin: 10px 0;
-}
-</style>
+    /* botões */
+    .btn-row { display: flex; gap: 12px; margin-top: 4px; }
+
+    .btn {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Nunito', sans-serif;
+      font-size: .95rem;
+      font-weight: 800;
+      cursor: pointer;
+      letter-spacing: .5px;
+      transition: transform .15s, box-shadow .15s, filter .15s;
+    }
+    .btn:active { transform: scale(.97); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--red), #0a5c2a);
+      color: var(--white);
+      box-shadow: 0 4px 16px rgba(3,53,23,0.5);
+    }
+    .btn-primary:hover { filter: brightness(1.1); box-shadow: 0 6px 22px rgba(3,53,23,0.65); }
+
+    .btn-secondary {
+      background: rgba(110,177,80,0.12);
+      color: var(--yellow);
+      border: 1.5px solid rgba(110,177,80,0.35);
+    }
+    .btn-secondary:hover { background: rgba(110,177,80,0.2); }
+
+    /* toast */
+    #toast {
+      position: fixed;
+      bottom: 32px; right: 32px;
+      background: var(--yellow);
+      color: var(--dark);
+      font-weight: 800;
+      padding: 14px 24px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      font-size: .95rem;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: transform .4s cubic-bezier(.34,1.56,.64,1), opacity .4s;
+      z-index: 999;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+
+    /* ── RIGHT COL ── */
+    .right-col { display: flex; flex-direction: column; gap: 24px; }
+
+    /* ── CLOSER SCOREBOARD ── */
+    .scoreboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
+    }
+    .closer-card {
+      background: linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 20px 16px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .closer-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(0,0,0,0.4); }
+    .closer-card.next-up {
+      border-color: var(--yellow);
+      background: linear-gradient(145deg, rgba(110,177,80,0.12), rgba(110,177,80,0.03));
+    }
+    .closer-card.next-up::before {
+      content: '▶ PRÓXIMO';
+      position: absolute;
+      top: 8px; right: 8px;
+      font-size: .55rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+      background: var(--yellow);
+      color: var(--dark);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .closer-avatar {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--red), var(--yellow));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      font-weight: 900;
+      margin: 0 auto 10px;
+      color: var(--white);
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+    }
+    .closer-name { font-size: .9rem; font-weight: 800; margin-bottom: 10px; }
+    .closer-count {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.8rem;
+      line-height: 1;
+      color: var(--yellow);
+    }
+    .closer-count-label { font-size: .65rem; color: #888; letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+
+    /* total badge */
+    .total-bar {
+      background: linear-gradient(90deg, var(--red-dk), var(--red));
+      border-radius: 12px;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid rgba(110,177,80,0.25);
+    }
+    .total-bar .tb-label { font-size: .85rem; font-weight: 700; color: rgba(255,255,255,0.7); letter-spacing: 1px; text-transform: uppercase; }
+    .total-bar .tb-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.2rem;
+      color: var(--yellow);
+    }
+    .total-bar .tb-sub { font-size: .7rem; color: rgba(255,255,255,0.5); }
+
+    /* ── AGENDAMENTOS TABLE ── */
+    .date-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .date-nav .nav-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: var(--white);
+      border-radius: 8px;
+      width: 36px; height: 36px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s;
+    }
+    .date-nav .nav-btn:hover { background: rgba(110,177,80,0.2); color: var(--yellow); }
+    .date-nav .date-display {
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--yellow);
+      min-width: 140px;
+      text-align: center;
+    }
+    .date-nav .refresh-btn {
+      margin-left: auto;
+      background: rgba(3,53,23,0.2);
+      border: 1px solid rgba(3,53,23,0.4);
+      color: var(--yellow);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .date-nav .refresh-btn:hover { background: rgba(3,53,23,0.4); }
+
+    .table-wrap { overflow-x: auto; margin-top: 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    thead tr { background: rgba(110,177,80,0.08); }
+    th {
+      padding: 10px 14px;
+      text-align: left;
+      font-size: .72rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--yellow);
+      border-bottom: 1px solid rgba(110,177,80,0.2);
+    }
+    td {
+      padding: 11px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.85);
+      vertical-align: middle;
+    }
+    tbody tr:hover { background: rgba(255,255,255,0.04); }
+    .badge-sdr {
+      background: rgba(3,53,23,0.25);
+      color: #7dcc5e;
+      font-size: .72rem;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 99px;
+      letter-spacing: .5px;
+    }
+    .badge-closer {
+      background: rgba(110,177,80,0.12);
+      color: var(--yellow);
+      font-size: .72rem;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 99px;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #555;
+      font-size: .95rem;
+    }
+    .spin { animation: spin 1s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* responsivo */
+    @media (max-width: 900px) {
+      .main-grid { grid-template-columns: 1fr; padding: 20px; }
+      header { padding: 14px 20px; }
+      .header-title { font-size: 1.3rem; }
+    }
+  </style>
 </head>
-
 <body>
 
-<div class="card">
+<header>
+  <div class="logo-wrap">
+    <img src="https://github.com/jonathanseojuca/fila-closers/blob/main/images/Logo.png?raw=true" alt="Mercadinho do Seo Juca" onerror="this.style.display='none'" />
+  </div>
+  <div class="header-title">Fila de Closers</div>
+  <div class="header-badge">SDR Control</div>
+</header>
 
-  <h3>Fila de Closers</h3>
+<div class="main-grid">
 
-  <div class="closer" id="closer">Carregando...</div>
+  <!-- ══ LEFT: FORMULÁRIO ══ -->
+  <div class="card form-col">
+    <div class="card-title">📋 Novo Agendamento</div>
 
-  <label>SDR</label>
-  <select id="sdr"></select>
+    <div>
+      <label>Seu nome (SDR)</label>
+      <select id="sdr-select">
+        <option value="">Carregando...</option>
+      </select>
+    </div>
 
-  <label>Lead</label>
-  <input id="lead">
+    <div>
+      <label>Data da 1ª Reunião</label>
+      <input type="date" id="meeting-date" />
+    </div>
 
-  <label>Data da Reunião</label>
-  <input type="date" id="data_reuniao">
+    <div class="next-closer-box">
+      <span class="nc-label">Próximo Closer</span>
+      <span class="nc-name" id="next-closer-name">—</span>
+    </div>
 
-  <button onclick="nextCloser()">Pular</button>
-  <button class="primary" onclick="agendar()">Agendar</button>
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="btn-skip">⏭ Pular Closer</button>
+      <button class="btn btn-primary" id="btn-schedule">✅ Agendar Reunião</button>
+    </div>
+  </div>
 
+  <!-- ══ RIGHT ══ -->
+  <div class="right-col">
+
+    <!-- Scoreboard closers -->
+    <div class="card">
+      <div class="card-title">🏆 Placar de Closers – Hoje</div>
+      <div class="total-bar" style="margin-bottom:20px">
+        <div>
+          <div class="tb-label">Total de agendamentos</div>
+          <div class="tb-sub" id="today-label">hoje</div>
+        </div>
+        <div class="tb-num" id="total-today">0</div>
+      </div>
+      <div class="scoreboard" id="scoreboard">
+        <div class="empty-state"><span class="spin">⏳</span> Carregando...</div>
+      </div>
+    </div>
+
+    <!-- Tabela de agendamentos -->
+    <div class="card">
+      <div class="card-title">📅 Agendamentos</div>
+      <div class="date-nav">
+        <button class="nav-btn" id="btn-prev">◀</button>
+        <div class="date-display" id="filter-date-label"></div>
+        <button class="nav-btn" id="btn-next">▶</button>
+        <button class="refresh-btn" id="btn-refresh">⟳ Atualizar</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>SDR</th>
+              <th>Closer</th>
+              <th>Data Reunião</th>
+              <th>Registrado em</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <tr><td colspan="5" class="empty-state"><span class="spin">⏳</span> Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
 </div>
 
-<div class="chart-card">
-
-  <h3>Reuniões por dia</h3>
-
-  <input type="date" id="filtroData" onchange="loadStats()">
-
-  <div class="total" id="total">0 reuniões</div>
-
-  <canvas id="chart"></canvas>
-
-</div>
+<div id="toast"></div>
 
 <script>
+// ══════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════
+const SHEET_BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQXQEJMybM1mJ2X-Mf_EzgrCBoLt_t7leS7yI1cw_C2_g_iAc19TjHypB69AlKmR9v5Ay5Nn8g6G55o/pub';
+const GID_AGEND = '1127809379';
+const GID_SDR   = '1360192723';
+const WEBHOOK   = 'https://hook.us2.make.com/xh4sxhoftr8gyemrd18rjw9brksguzda';
 
-const CLOSERS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXQEJMybM1mJ2X-Mf_EzgrCBoLt_t7leS7yI1cw_C2_g_iAc19TjHypB69AlKmR9v5Ay5Nn8g6G55o/pub?output=csv";
-const SDR_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXQEJMybM1mJ2X-Mf_EzgrCBoLt_t7leS7yI1cw_C2_g_iAc19TjHypB69AlKmR9v5Ay5Nn8g6G55o/pub?gid=1360192723&output=csv";
-const AGENDAMENTOS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXQEJMybM1mJ2X-Mf_EzgrCBoLt_t7leS7yI1cw_C2_g_iAc19TjHypB69AlKmR9v5Ay5Nn8g6G55o/pub?gid=1127809379&output=csv";
-const WEBHOOK_URL = "https://hook.us2.make.com/xh4sxhoftr8gyemrd18rjw9brksguzda";
+// ══════════════════════════════════════════════
+//  ESTADO
+// ══════════════════════════════════════════════
+let closers        = [];   // [{name, initials}]
+let closerIndex    = 0;    // próximo closer
+let agendamentos   = [];   // linhas brutas
+let filterDate     = new Date();
 
-let closers = [];
-let index = 0;
-let chart;
-
-// closers
-async function loadClosers() {
-  const res = await fetch(CLOSERS_URL);
-  const text = await res.text();
-
-  closers = text.split("\n").slice(1).map(l => l.trim()).filter(l => l);
-  render();
+// ══════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════
+function fmtDate(d) {
+  return d.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric'});
+}
+function isoDate(d) {
+  return d.toISOString().split('T')[0];
+}
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g,''));
+  return lines.slice(1).map(line => {
+    // handle quoted commas
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let ch of line) {
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else cur += ch;
+    }
+    cols.push(cur.trim());
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = (cols[i] || '').replace(/"/g,''));
+    return obj;
+  });
+}
+function initials(name) {
+  return name.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
+}
+function toast(msg, ok=true) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = ok ? 'var(--yellow)' : '#2d6e1a';
+  t.style.color = ok ? 'var(--dark)' : 'var(--white)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
 }
 
-// SDR
+// ══════════════════════════════════════════════
+//  BUSCAR DADOS
+// ══════════════════════════════════════════════
+async function fetchCSV(gid) {
+  const url = `${SHEET_BASE}?gid=${gid}&single=true&output=csv&t=${Date.now()}`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('Erro ao buscar planilha');
+  return parseCSV(await r.text());
+}
+
 async function loadSDRs() {
-  const res = await fetch(SDR_URL);
-  const text = await res.text();
-
-  const sdrs = text.split("\n").slice(1).map(l => l.trim()).filter(l => l);
-
-  document.getElementById("sdr").innerHTML =
-    `<option value="">Selecione</option>` +
-    sdrs.map(s => `<option>${s}</option>`).join("");
+  try {
+    const rows = await fetchCSV(GID_SDR);
+    const sel = document.getElementById('sdr-select');
+    sel.innerHTML = '<option value="">Selecione seu nome</option>';
+    // espera coluna "nome" ou primeira coluna
+    rows.forEach(row => {
+      const name = row['nome'] || row['Nome'] || row['SDR'] || Object.values(row)[0];
+      if (name) {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        sel.appendChild(opt);
+      }
+    });
+  } catch(e) {
+    toast('Erro ao carregar SDRs', false);
+  }
 }
 
-// render
-function render() {
-  if (!closers.length) return;
-  document.getElementById("closer").innerText =
-    closers[index % closers.length];
+async function loadAgendamentos() {
+  try {
+    const rows = await fetchCSV(GID_AGEND);
+    agendamentos = rows;
+    // extrair closers únicos se ainda não carregados via planilha dedicada
+    if (closers.length === 0) {
+      const names = [...new Set(rows.map(r => r['closer'] || r['Closer'] || r['CLOSER']).filter(Boolean))];
+      if (names.length) {
+        closers = names.map(n => ({name: n, initials: initials(n)}));
+      }
+    }
+    renderScoreboard();
+    renderTable();
+  } catch(e) {
+    console.error(e);
+    document.getElementById('table-body').innerHTML = '<tr><td colspan="5" class="empty-state">Erro ao carregar dados</td></tr>';
+  }
 }
 
-// próximo
-function nextCloser() {
-  index++;
-  render();
-}
+// ══════════════════════════════════════════════
+//  RENDER SCOREBOARD
+// ══════════════════════════════════════════════
+function renderScoreboard() {
+  const todayStr = isoDate(new Date());
+  const board = document.getElementById('scoreboard');
+  const totalEl = document.getElementById('total-today');
 
-// agendar
-async function agendar() {
-  const sdr = document.getElementById("sdr").value;
-  const lead = document.getElementById("lead").value;
-  const data = document.getElementById("data_reuniao").value;
+  if (!closers.length) {
+    board.innerHTML = '<div class="empty-state">Nenhum closer encontrado</div>';
+    return;
+  }
 
-  if (!sdr || !lead || !data) return alert("Preencha tudo");
-
-  await fetch(WEBHOOK_URL, {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({
-      closer: closers[index % closers.length],
-      sdr,
-      lead,
-      data_reuniao: data
-    })
-  });
-
-  index++;
-  render();
-  loadStats();
-}
-
-// stats
-async function loadStats() {
-  const res = await fetch(AGENDAMENTOS_URL);
-  const text = await res.text();
-
-  const rows = text.split("\n").slice(1).map(r => r.split(","));
-
-  const filtro = document.getElementById("filtroData").value;
-
+  // contar agendamentos do dia por closer
   const counts = {};
-  let total = 0;
+  closers.forEach(c => counts[c.name] = 0);
 
-  rows.forEach(r => {
-    const closer = r[0];
-    const data = r[3];
-
-    if (!filtro || data === filtro) {
-      counts[closer] = (counts[closer] || 0) + 1;
-      total++;
+  agendamentos.forEach(row => {
+    const closer = row['closer'] || row['Closer'] || row['CLOSER'] || '';
+    const dataCad = row['data_cadastro'] || row['Data Cadastro'] || row['timestamp'] || row['Timestamp'] || '';
+    // verifica se é do dia de hoje
+    if (closer && dataCad) {
+      const rowDate = dataCad.substring(0, 10); // YYYY-MM-DD
+      if (rowDate === todayStr || dataCad.includes(new Date().toLocaleDateString('pt-BR').split('/').reverse().join('-'))) {
+        if (counts.hasOwnProperty(closer)) counts[closer]++;
+        else counts[closer] = 1;
+      }
+    } else if (closer) {
+      // fallback: sem data, conta tudo para exibição
     }
   });
 
-  document.getElementById("total").innerText = total + " reuniões";
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  totalEl.textContent = total;
+  document.getElementById('today-label').textContent = `hoje – ${fmtDate(new Date())}`;
 
-  const labels = Object.keys(counts);
-  const dataVals = Object.values(counts);
-
-  if (chart) chart.destroy();
-
-  chart = new Chart(document.getElementById("chart"), {
-    type: 'pie',
-    data: {
-      labels: labels,
-      datasets: [{
-        data: dataVals
-      }]
-    }
+  board.innerHTML = '';
+  closers.forEach((c, i) => {
+    const div = document.createElement('div');
+    div.className = 'closer-card' + (i === closerIndex ? ' next-up' : '');
+    div.innerHTML = `
+      <div class="closer-avatar">${c.initials}</div>
+      <div class="closer-name">${c.name}</div>
+      <div class="closer-count">${counts[c.name] || 0}</div>
+      <div class="closer-count-label">reuniões hoje</div>
+    `;
+    board.appendChild(div);
   });
 }
 
-// init
-loadClosers();
-loadSDRs();
-loadStats();
+// ══════════════════════════════════════════════
+//  RENDER TABLE
+// ══════════════════════════════════════════════
+function renderTable() {
+  const tbody = document.getElementById('table-body');
+  const filterStr = isoDate(filterDate);
+  document.getElementById('filter-date-label').textContent = fmtDate(filterDate);
 
+  // filtrar por data
+  const filtered = agendamentos.filter(row => {
+    const data = row['data_reuniao'] || row['Data Reunião'] || row['data'] || row['Data'] || '';
+    const cad  = row['data_cadastro'] || row['Data Cadastro'] || row['timestamp'] || '';
+    return data.includes(filterStr) || cad.includes(filterStr) ||
+           data.includes(filterDate.toLocaleDateString('pt-BR')) ||
+           cad.includes(filterDate.toLocaleDateString('pt-BR'));
+  });
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="empty-state">Nenhum agendamento em ${fmtDate(filterDate)}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = '';
+  filtered.forEach((row, i) => {
+    const sdr    = row['sdr']    || row['SDR']    || row['Nome SDR'] || '—';
+    const closer = row['closer'] || row['Closer'] || row['CLOSER']   || '—';
+    const dataR  = row['data_reuniao'] || row['Data Reunião'] || row['data'] || '—';
+    const cad    = row['data_cadastro'] || row['Data Cadastro'] || row['timestamp'] || '—';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${i+1}</td>
+      <td><span class="badge-sdr">${sdr}</span></td>
+      <td><span class="badge-closer">${closer}</span></td>
+      <td>${dataR}</td>
+      <td>${cad}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ══════════════════════════════════════════════
+//  PRÓXIMO CLOSER
+// ══════════════════════════════════════════════
+function updateNextCloser() {
+  const el = document.getElementById('next-closer-name');
+  if (closers.length) {
+    el.textContent = closers[closerIndex].name;
+  } else {
+    el.textContent = 'Carregando...';
+  }
+}
+
+// ══════════════════════════════════════════════
+//  AGENDAR
+// ══════════════════════════════════════════════
+document.getElementById('btn-schedule').addEventListener('click', async () => {
+  const sdr  = document.getElementById('sdr-select').value;
+  const data = document.getElementById('meeting-date').value;
+
+  if (!sdr) { toast('Selecione seu nome!', false); return; }
+  if (!data) { toast('Escolha a data da reunião!', false); return; }
+  if (!closers.length) { toast('Closers não carregados!', false); return; }
+
+  const closer = closers[closerIndex].name;
+  const btn = document.getElementById('btn-schedule');
+  btn.disabled = true;
+  btn.textContent = '⏳ Enviando...';
+
+  try {
+    await fetch(WEBHOOK, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      mode: 'no-cors',
+      body: JSON.stringify({ sdr, closer, data_reuniao: data, timestamp: new Date().toISOString() })
+    });
+
+    toast(`✅ Agendado! ${closer} recebeu a reunião.`);
+    // avança o índice
+    closerIndex = (closerIndex + 1) % closers.length;
+    updateNextCloser();
+    renderScoreboard();
+
+    // aguarda 3s e atualiza tabela
+    setTimeout(async () => { await loadAgendamentos(); }, 3000);
+
+  } catch(e) {
+    toast('Erro ao enviar. Tente novamente.', false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✅ Agendar Reunião';
+  }
+});
+
+// Pular closer
+document.getElementById('btn-skip').addEventListener('click', () => {
+  if (!closers.length) return;
+  const pulado = closers[closerIndex].name;
+  closerIndex = (closerIndex + 1) % closers.length;
+  updateNextCloser();
+  renderScoreboard();
+  toast(`⏭ ${pulado} pulado. Próximo: ${closers[closerIndex].name}`);
+});
+
+// Navegar datas
+document.getElementById('btn-prev').addEventListener('click', () => {
+  filterDate.setDate(filterDate.getDate() - 1);
+  renderTable();
+});
+document.getElementById('btn-next').addEventListener('click', () => {
+  filterDate.setDate(filterDate.getDate() + 1);
+  renderTable();
+});
+document.getElementById('btn-refresh').addEventListener('click', async () => {
+  document.getElementById('btn-refresh').textContent = '⟳ Atualizando...';
+  await loadAgendamentos();
+  document.getElementById('btn-refresh').textContent = '⟳ Atualizar';
+});
+
+// data padrão
+document.getElementById('meeting-date').value = isoDate(new Date());
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+(async () => {
+  await loadSDRs();
+  await loadAgendamentos();
+  updateNextCloser();
+})();
+
+// Auto-refresh a cada 60s
+setInterval(loadAgendamentos, 60000);
 </script>
-
 </body>
 </html>
